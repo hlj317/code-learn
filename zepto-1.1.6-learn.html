@@ -8,7 +8,7 @@
 </head>
 
 <body>
-    
+    <div id="a1">aaaa</div>
 </body>
 <script>
 //首先把Zepto放到一个大的闭包中
@@ -26,9 +26,94 @@ var Zepto = (function(){
 		elementDisplay = {},         //定义一个元素对象
 		classCache = {},             //定义一个缓存对象
 		cssNumber = {"column-count":1,"columns":1,"line-height":1,"opacity":1,"z-index":1,"zoom":1},
-		fragmentRE = /^\s*<(\w)+|!)[^>]*>/,
-		singleTagRE = /^<(\w+)\s*\/?>(?:<\/\1>|)$/,
-		tagExpanderRE = 
+		fragmentRE = /^\s*<(\w+|!)[^>]*>/,
+        singleTagRE = /^<(\w+)\s*\/?>(?:<\/\1>|)$/,
+		tagExpanderRE = /<(?!area|br|col|embed|hr|img|input|link|meta|param)(([\w:]+)[^>]*)\/>/ig,
+        rootNodeRE = /^(?:body|html)$/i,  
+        capitalRE = /([A-Z])/g,
+        methodAttributes = ['val','css','html','text','data','width','height','offset'],   //定义选择器方法
+        adjacencyOperators = ['after','prepend','before','append'],         //定义选择器方法
+        table = document.createElement('table'),    //创建一个table的dom节点
+        tableRow = document.createElement('tr'),    //创建一个tr的dom节点
+        containers = {
+
+        	'tr' : document.createElement('tbody'),
+        	'tbody' : table,
+        	'thead' : table,
+        	'tfoot' : table,
+        	'td' : tableRow,
+        	'th' : tableRow,
+        	'*' : document.createElement('div')
+
+        },
+
+        readyRE = /complete|loaded|interactive/,
+
+        simpleSelectorRE = /^[\w-]*$/,
+
+        class2type = {},
+
+        toString = class2type.toString,
+
+        zepto = {},
+
+        camelize,
+
+        uniq,
+
+        tempParent = document.createElement('div'),
+
+        //节点属性映射表
+        propMap = {
+
+        	'tabindex' : 'tabIndex',
+        	'readonly' : 'readOnly',
+        	'for' : 'htmlFor',
+        	'class' : 'className',
+        	'maxLength' : 'maxLength',
+        	'cellspacing' : 'cellSpacing',
+        	'cellpadding' : 'cellPadding',
+        	'rowspan' : 'rowSpan',
+        	'colspan' : 'colSpan',
+        	'usemap' : 'useMap',
+        	'frameborder' : 'frameBorder',
+        	'contenteditable' : 'contentEditable'
+
+        },
+
+        //定义数组判断原型方法
+        isArray = Array.isArrya || function(object){return object instanceof Array};
+
+        zepto.matches = function(element,selector){
+
+        	if(!selector || !element || element.nodeType !== 1) return false;
+
+        	var matchesSelector = element.webkitMatchesSelector || element.mozMatchesSelector ||
+            element.oMatchesSelector || element.matchesSelector;
+
+            if(matchesSelector) return matchesSelector.call(element,selector);
+
+            var match,
+            	parent = element.parentNode,
+            	temp = !parent;
+
+           if(temp) (parent = tempParent).appendChild(element);
+           match = ~zepto.qsa(parent,selector).indexOf(element);
+
+           temp && tempParent.removeChild(element);
+
+           return match;
+
+        }
+
+
+
+
+
+
+
+
+
 
 
 })();
