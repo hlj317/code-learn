@@ -4,18 +4,41 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1.0,minimum-scale=1.0,maximum-scale=1.0,user-scalable=no">
-    <title>page a</title>
+    <title>zepto-1.1.6-learn</title>
 </head>
 
 <body>
-    <h1>page a</h1>
-    <div id="list"></div>
-    <div id="toast" class="none toast">toast</div>
-    <div id="dialog" class="none dialog">dialog</div>
-    <p><i class="icon-cart"></i></p>
-    <p id="logo"></p>
-    
     
 </body>
+<script>
+//首先把Zepto放到一个大的闭包中
+var Zepto = (function(){
+
+	//创建局部变量
+	var undefined,
+		key,
+		$,
+		classList,
+		emptyArray = [],  //定义一个空数组
+		slice = emptyArray.slice,    //定义数组slice原型方法
+		filter = emptyArray.filter,  //定义数组filter原型方法
+		document = window.document,  //定义document对象
+		elementDisplay = {},         //定义一个元素对象
+		classCache = {},             //定义一个缓存对象
+		cssNumber = {"column-count":1,"columns":1,"line-height":1,"opacity":1,"z-index":1,"zoom":1},
+		fragmentRE = /^\s*<(\w)+|!)[^>]*>/,
+		singleTagRE = /^<(\w+)\s*\/?>(?:<\/\1>|)$/,
+		tagExpanderRE = 
+
+
+})();
+
+//把Zepto设为全局变量
+window.Zepto = Zepto;
+
+//判断window.$是否赋值，如果没有，则把Zepto对象赋给window.$
+window.$ === undefined && (window.$ = Zepto)
+
+</script>
 
 </html>
