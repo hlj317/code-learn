@@ -5,10 +5,16 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1.0,minimum-scale=1.0,maximum-scale=1.0,user-scalable=no">
     <title>zepto-1.1.6-learn</title>
+    <style>
+    #a1{
+    	font-size: 28px;
+    	color:#c03131;
+    }
+    </style>
 </head>
 
 <body>
-    <div id="a1">aaaa</div>
+    <div id="a1" class="a1" style="width:30px;">aaaa</div>
 </body>
 <script>
 //首先把Zepto放到一个大的闭包中
@@ -82,37 +88,493 @@ var Zepto = (function(){
         },
 
         //定义数组判断原型方法
-        isArray = Array.isArrya || function(object){return object instanceof Array};
+        isArray = Array.isArray || function(object){return object instanceof Array};
 
-        zepto.matches = function(element,selector){
+    //定义该dom节点是否在选择器中的方法
+    zepto.matches = function(element,selector){
 
-        	if(!selector || !element || element.nodeType !== 1) return false;
+    	if(!selector || !element || element.nodeType !== 1) return false;
 
-        	var matchesSelector = element.webkitMatchesSelector || element.mozMatchesSelector ||
-            element.oMatchesSelector || element.matchesSelector;
+    	var matchesSelector = element.webkitMatchesSelector || element.mozMatchesSelector ||
+        element.oMatchesSelector || element.matchesSelector;
 
-            if(matchesSelector) return matchesSelector.call(element,selector);
+        if(matchesSelector) return matchesSelector.call(element,selector);
 
-            var match,
-            	parent = element.parentNode,
-            	temp = !parent;
+        var match,
+        	parent = element.parentNode,
+        	temp = !parent;
 
-           if(temp) (parent = tempParent).appendChild(element);
-           match = ~zepto.qsa(parent,selector).indexOf(element);
+       if(temp) (parent = tempParent).appendChild(element);
+       match = ~zepto.qsa(parent,selector).indexOf(element);
 
-           temp && tempParent.removeChild(element);
+       temp && tempParent.removeChild(element);
 
-           return match;
+       return match;
 
+    }
+
+    //判断数据类型
+    function type(obj){
+    	return obj == null ? String(obj) : class2type[toString.call(obj)] || "object";
+    }
+
+	//?不理解
+    function isFunction(value) {
+    	return type(value) == "function";
+    }
+
+    //判断是否为window对象，window.window可以一直深入下去，永远相等
+    function isWindow(obj){
+    	return obj != null && obj == obj.window;
+    }
+
+    //判断是否为document对象
+    function isDocument(obj){
+    	return obj != null && obj.nodeType == obj.DOCUMENT_NODE;
+    }
+
+    //?不理解
+    function isObject(obj){
+    	return type(obj) == "object";
+    }
+
+    //Object.getPrototypeOf(obj)等价于obj所在类的原型方法，比如 == A.prototype
+    function isPlainObject(obj){
+    	return isObject(obj) && !isWindow(obj) && Object.getPrototypeOf(obj) == Object.prototype;
+    }
+
+    //判断是否是数组和伪数组，比如arguments,nodeTypes等
+    function likeArray(obj){
+    	return typeof obj.length == 'number';
+    }
+
+    //过滤数组中为null的元素
+    function compact(array){
+    	return filter.call(array,function(item){
+    		return item != null;
+    	});
+    }
+
+    //把多个数组合并成一个数组返回
+    function flatten(array){
+    	return array.length > 0 ? $.fn.concat.apply([],array) : array;
+    }
+
+    //?不理解
+    camelize = function(str){
+    	return str.replace(/-+(.)?/g,function(match,chr){
+    		return chr ? chr.toUpperCase() : '';
+    	})
+    }
+
+    //序列化方法，?不是特别理解
+    function dasherize(str){
+    	return str.replace(/::/g, '/')
+        .replace(/([A-Z]+)([A-Z]68[a-z])/g, '$1_$2')
+        .replace(/([a-z\d])([A-Z])/g, '$1_$2')
+        .replace(/_/g, '-').toLowerCase()
+    }
+
+    //去除数组中重复的元素
+    uniq = function(array){
+    	return filter.call(array,function(item,index){
+    		return array.indexOf(item) == index;
+    	})
+    }
+
+    //判断name是不是样式缓存中的，如果不是，就创建一个映射关系
+    function classRE(name){
+    	return name in classCache ? classCache[name] : (classCache[name] = new RegExp('(^|\\s)' + name + '(\\s|$)'));
+    }
+
+    //?不理解
+    function maybeAddPx(name,value){
+        return (typeof value == "number" && !cssNumber[dasherize(name)]) ? value + "px" : value;
+    }
+
+    //初始化节点显示，?不是特别理解
+    function defaultDisplay(nodeName){
+    	var element,
+    		display;
+
+    	if(!elementDisplay[nodeName]){
+
+    		element = document.createElement(nodeName);
+    		document.body.appendChild(element);
+    		//window.getComputedStyle可以获取dom的所有样式属性，只读
+    		display = getComputedStyle(element,'').getPropertyValue("display");
+    		element.parentNode.removeChild(element);
+    		display == "none" && (display = "block");
+    		elementDisplay[nodeName] = display;
+
+    	}
+    	return elementDisplay[nodeName];
+
+    }
+
+    //获取dom节点下的子节点属性(过滤文本属性等)
+    function children(element){
+    	return 'children' in element ? slice.call(element.children) : $.map(element.childNodes,function(node){
+    			if (node.nodeType ==1){
+    				return node;
+    			}
+    		})
+    }
+
+    //?不理解
+    zepto.fragment = function(html,name,properties){
+
+    	var dom,nodes,containers;
+
+    	if(singleTagRE.test(html)){
+    		//当用到exec或者test这种正则匹配后，RegExp对象就会生成子匹配的值
+    		dom = $(document.createElement(RegExp.$1));
+    	}
+
+    	if(!dom){
+
+    		if(html.replace){
+    			html = html.replace(tagExpanderRE,"<$1></$2>");
+    		}
+
+    		if(name === undefined){
+    			name = fragmentRE.test(html) && RegExp.$1;
+    		}
+
+    		if(!(name in containers)){
+    			name = '*';
+    		}
+
+    		container = containers[name];
+    		container.innerHTML = '' + html;
+
+    		dom = $.each(slice.call(container.childNodes),function(){
+    				container.removeChild(this);
+    			});
+    	}
+
+		if(isPlainObject(properties)){
+			nodes = $(dom);
+			$.each(properties,function(key,value){
+				if(methodAttributes.indexOf(key) > -1){
+					nodes[key](value);
+				}else{
+					nodes.attr(key,value);
+				}
+			})
+		}
+
+    	return dom;
+    }
+
+    //?不理解
+    zepto.Z = function(dom,selector){
+    	dom = dom || [];
+    	dom.__proto__ = $.fn;
+    	dom.selector = selector || "";
+    	return dom;
+    }
+
+    //?不理解
+    zepto.isZ = function(object){
+    	return object instanceof zepto.Z;
+    }
+
+    //选择器初始化方法，?不理解
+    zepto.init = function(selector,context){
+
+    	var dom;
+
+    	if(!selector){
+    		return zepto.Z();
+    	}else if(typeof selector == 'string'){
+
+    		selector = selector.trim();
+
+    		if(selector[0] == '<' && fragmentRE.test(selector)){
+    			dom = zepto.fragment(selector,RegExp.$1,context);
+    			selector = null;
+    		}else if(context !== undefined){
+    			
+    			return $(context).find(selector);
+    		
+    		}else{
+    			dom = zepto.qsa(document,selector);
+    		}
+
+    	}else if(isFunction(selector)){
+    		
+    		return $(document).ready(selector);
+    	
+    	}else if(zepto.isZ(selector)){
+
+    		return selector;
+
+    	}else{
+
+            if (isArray(selector)) dom = compact(selector)
+
+            else if (isObject(selector))
+                dom = [selector], selector = null
+
+            else if (fragmentRE.test(selector))
+                dom = zepto.fragment(selector.trim(), RegExp.$1, context), selector = null
+
+            else if (context !== undefined) return $(context).find(selector)
+
+            else dom = zepto.qsa(document, selector)
+
+    	}
+
+    	return zepto.Z(dom,selector);
+    }
+
+    //选择器初始化方法
+    $ = function(selector,context){
+    	return zepto.init(selector,context);
+    }
+
+    //深度拷贝方法
+    function extend(target,source,deep){
+
+    	for(key in source){
+
+    		if(deep && (isPlainObject(source[key]) || isArray(source[key]))){
+
+    			//如果当前属性值是object，就创建一个object
+    			if(isPlainObject(source[key]) && !isPlainObject(target[key])){
+    				target[key] = {};
+    			}
+    			if(isArray(source[key]) && !isArray(target[key])){
+    				target[key] = [];
+    			}
+
+    			//递归调用
+    			extend(target[key],source[key],deep);
+
+    		}else if(source[key] !== undefined){
+    			target[key] = source[key];
+    		}
+
+    	}
+
+    }
+
+    //?不理解
+    $.extend = function(target){
+    	var deep,
+    		args = slice.call(arguments,1);
+
+    	if(typeof target == 'boolean'){
+    		deep = target;
+    		target = args.shift();
+    	}
+    	args.forEach(function(arg){
+    		extend(target,arg,deep);
+    	})
+
+    	return target;
+    }
+
+    //选择器，?不是特别理解实现原理
+    zepto.qsa = function(element,selector){
+
+    	var found,
+    		maybeID = selector[0] == '#',
+    		maybeClass = !maybeID && selector[0] == '.',
+    		nameOnly = maybeID || maybeClass ? selector.slice(1) : selector,
+    		isSimple = simpleSelectorRE.test(nameOnly);
+
+        return (isDocument(element) && isSimple && maybeID) ?
+            ( (found = element.getElementById(nameOnly)) ? [found] : [] ) :
+            (element.nodeType !== 1 && element.nodeType !== 9) ? [] :
+                slice.call(
+                    isSimple && !maybeID ?
+                        maybeClass ? element.getElementsByClassName(nameOnly) : // getElementsByClassName兼容IE9以上浏览器
+                            element.getElementsByTagName(selector) : // Or a tag
+                        element.querySelectorAll(selector) // Or it's not simple, and we need to query all
+                )
+    }
+
+    //过滤dom节点，?不是特别明白
+    function filtered(nodes,selector){
+    	return selector == null ? $(nodes) : $(nodes).filter(selector);	
+    }
+
+    //区分不同浏览器内核，兼容性判断，是否包含该节点;
+    $.contains = document.documentElement.contains ?
+    	function(parent,node){
+    		return parent !== node && parent.contains(node);
+    	} : 
+    	function(parent,node){
+    		while (node && (node = node.parentNode)){
+    			if (node === parent) return true;
+    		}
+    		return false;
+    	}
+
+    //?不理解
+    function funcArg(context,arg,idx,payload){
+    	return isFunction(arg) ? arg.call(context,idx,payload) : arg;
+    }
+
+    //设置或删除dom的属性值
+    function setAttribute(node,name,value){
+    	value == null ? node.removeAttribute(name) : node.setAttribute(name,value);
+    }
+
+    //不理解，似乎是对浏览器的svg兼容性做处理
+    function className(node,value){
+    	var klass = node.className || '',
+    		svg = klass && klass.baseVal !== undefined;
+
+    	if(value === undefined){
+    		return svg ? klass.baseVal : klass;
+    	}
+
+    	svg ? (klass.baseVal = value) : (node.className = value);
+
+    }
+
+    //反序列化方法，例如
+    // "true"  => true
+    // "false" => false
+    // "null"  => null
+    // "42"    => 42
+    // "42.5"  => 42.5
+    // "08"    => "08"
+    // JSON    => parse if valid
+    // String  => self
+    function deserializeValue(value){
+
+    	//多级三目运算，可读性实在太差了
+        try {
+            return value ?
+            value == "true" ||
+            ( value == "false" ? false :
+                value == "null" ? null :
+                    +value + "" == value ? +value :
+                        /^[\[\{]/.test(value) ? $.parseJSON(value) :
+                            value )
+                : value
+        } catch(e) {
+            return value
+        }
+    }
+
+    $.type = type;
+    $.isFunction = isFunction;
+    $.isWindow = isWindow;
+    $.isArray = isArray;
+    $.isPlainObject = isPlainObject;
+
+    //判断对象是否为空
+    $.isEmptyObject = function(obj){
+    	var name;
+    	for(name in obj){
+    		return false;
+    	}
+    	return true;
+    }
+
+    //获取元素在数组的位置,i表示查询起始位置
+    $.inArray = function(element,array,i){
+    	return emptyArray.indexOf.call(array,element,i);
+    }
+
+    //?不理解
+    $.camelCase = camelize;
+
+    //去除字符串前后空格
+    $.trim = function(str){
+    	return str == null ? "":String.prototype.trim.call(str);
+    }
+
+    $.uuid = 0;
+    $.support = {};
+    $.expr = {};
+
+    //映射迭代处理函数
+    $.map = function(elements,callback){
+
+    	var value,
+    		values = [],
+    		i,
+    		key;
+
+    	if(likeArray(elements)){
+
+    		for(i = 0;i<elements.length;i++){
+    			value = callback(elements[i],i);
+    			if(value != null){
+    				values.push(value);
+    			}
+    		}
+
+    	}else{
+
+    		for(key in elements){
+    			value = callback(elements[key],key);
+    			if(value != null){
+    				values.push(value);
+    			}
+    		}
+
+    	}
+    	//把多个数组合并成一个数组返回
+    	return flatten(values);   
+    }
+
+    //?跟map方法类似，但区别一时半会儿没看明白
+    $.each = function(elements,callback){
+
+    	var i,
+    		key;
+
+        if (likeArray(elements)) {
+            for (i = 0; i < elements.length; i++)
+                if (callback.call(elements[i], i, elements[i]) === false) return elements;
+        } else {
+            for (key in elements)
+                if (callback.call(elements[key], key, elements[key]) === false) return elements;
         }
 
+        return elements;
+    }
 
+    //数组过滤方法
+    $.grep = function(elements,callback){
+    	return filter.call(elements,callback);
+    }
 
+    if(window.JSON) $.parseJSON = JSON.parse;
 
+    //在class2type对象中定义所有的数据类型，返回的类型都是大写
+    $.each("Boolean Number String Function Array Date RegExp Object Error".split(" "),function(i,name){
+    	class2type["[object "+name+"]"] = name.toLowerCase();
+    })
 
+    //定义所有的函数方法
+    $.fn = {
 
+    	//拷贝所有可用的数组原型方法
+    	forEach : emptyArray.forEach,
+    	reduce : emptyArray.reduce,
+    	push : emptyArray.push,
+    	sort : emptyArray.sort,
+    	indexOf : emptyArray.indexOf,
+    	concat : emptyArray.concat,
 
+    	//?不理解
+    	map : function(fn){
+    		return $($.map(this,function(el,i){
 
+    			return fn.call(el,i,el);
+
+    		}))
+    	}
+
+    }
 
 
 
