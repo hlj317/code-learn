@@ -1056,7 +1056,7 @@ var Zepto = (function(){
 
     	},
 
-    	//
+    	//为dom设置样式
     	css : function(property,value){
 
     		if(arguments.length<2){
@@ -1105,6 +1105,43 @@ var Zepto = (function(){
     		}
     		return this.each(function(){
     			this.style.cssText += ';' + css;
+    		})
+
+    	},
+
+    	//获取dom所在队列的下标值
+    	index : function(element){
+    		return element ? this.indexOf($(element)[0]) : this.parent().children().indexOf(this[0]);
+    	},
+
+    	//?不理解
+    	hasClass : function(name){
+    		if(!name){
+    			return false;
+    		}
+    		return emptyArray.some.call(this,function(el){
+    			//这里的this相当于classRE(name)
+    			return this.test(className(el));
+    		},classRE(name));
+    	},
+
+    	addClass : function(name){
+
+    		if(!name) return this;
+
+    		return this.each(function(index){
+
+    			if(!('className' in this){
+    				return;
+    			})
+    			classList = [];
+    			var cls = className(this),newName = funcArg(this,name,index,cls);
+
+    			newName.split(/\s+/g).forEach(function(klass){
+    				if(!$(this).hasClass(klass))
+    			},this);
+
+    			classList.length && className(this,cls + (cls ? " ":"") + classList.join(" "));
     		})
 
     	}
