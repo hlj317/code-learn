@@ -1125,8 +1125,10 @@ var Zepto = (function(){
     		},classRE(name));
     	},
 
+        //为dom添加样式
     	addClass : function(name){
 
+            //如果没有样式需要添加，直接返回
     		if(!name) return this;
 
     		return this.each(function(index){
@@ -1135,17 +1137,137 @@ var Zepto = (function(){
     				return;
     			})
     			classList = [];
-    			var cls = className(this),newName = funcArg(this,name,index,cls);
+    			var cls = className(this),
+                    newName = funcArg(this,name,index,cls);
 
     			newName.split(/\s+/g).forEach(function(klass){
-    				if(!$(this).hasClass(klass))
+    				if(!$(this).hasClass(klass)){
+                        classList.push(klass);
+                    }
     			},this);
 
     			classList.length && className(this,cls + (cls ? " ":"") + classList.join(" "));
     		})
+    	},
 
-    	}
+        //删除dom的样式
+        removeClass : function(name){
 
+            return this.each(function(index){
+
+                if(!('className' in this)){
+                    return;
+                }
+
+                if(name === undefined){
+                    return className(this,'');
+                }
+
+                classList = className(this);
+
+                funcArg(this,name,index,classlist).split(/\s+/g).forEach(function(klass){
+                    classList = classlist.replace(classRE(klass)," ");
+                })
+                className(this,classList.trim());
+
+            });
+
+        },
+
+        //dom切换样式，?第二个参数没有特别看明白
+        toggleClass : function(name,when){
+
+            if(!name){
+                return this;
+            }
+
+            return this.each(function(index){
+
+                var $this = $(this),
+                    names = funcArg(this,name,index,className(this));
+
+                    names.split(/\s+/g).forEach(function(klass){
+
+                        (when === undefined ? !&this.hasClass(klass) : when) ? $this.addClass(Klass) : $this.removeClass(klass);
+                    })
+
+            })
+
+        },
+
+        //?没看懂
+        scrollTop : function(value){
+
+            if(!this.length){
+                return;
+            }
+            var hasScrollTop = 'scrollTop' in this[0];
+            if(value === undefined){
+                return hasScrollTop ? this[0].scrollTop : this[0].scrollTop : this[0].pageYOffset;
+            }
+            return this.each(hasScrollTop ? function(){
+                    this.scrollLeft = value;
+                } : function(){
+                    this.scrollTop(value,this.scrollY);
+                })
+        },
+
+        //?没看懂
+        scrollLeft : function(value){
+
+            if(!this.length) return;
+            var hasScrollLeft = 'scrollLeft' in this[0];
+            if(value === undefined){
+                return hasScrollLeft ? this[0].scrollLeft : this[0].pageYOffset;
+            }
+            return this.each(hasScrollLeft ? function(){
+
+                this.scrollLeft = value;
+
+            } : function(){
+
+                this.scrollTop(value,this.scrollY)
+
+            });
+
+        },
+
+        //?没看懂
+        position : function(){
+
+            if (!this.length) return;
+
+            var elem = this[0],
+                offsetParent = this.offsetParent(),
+                offset = this.offset(),
+                parentOffset = rootNodeRE.test(offsetParent[0].nodeName) ? {top:0,left:0} : offsetParent.offset();
+
+            offset.top -= parseFloat($(elem).css('margin-top')) || 0;
+            offset.left -= parseFloat($(elem).css('margin-left')) || 0;
+
+            parentOffset.top += parseFloat($(offsetParent[0]).css('border-top-width')) || 0;
+
+            parentOffset.left += parseFloat($(offsetParent[0]).css('border-left-width')) || 0;
+
+            return{
+                top : offset.top - parentOffset.top,
+                left : offset.left - parentOffset.left;
+            }
+
+        },
+
+        //?没看懂
+        offsetParent: function(){
+
+            return this.map(function(){
+                var parent = this.offsetParent || document.body;
+                while (parent && !rootNodeRE.test(parent.nodeName) && $(parent).css("position") == "static"){
+                    parent = parent.offsetParent;
+                }
+                return parent;
+            })
+
+        }
 
     }
 
