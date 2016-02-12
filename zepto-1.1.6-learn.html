@@ -1271,7 +1271,100 @@ var Zepto = (function(){
 
     }
 
+    $.fn.detach = $.fn.remove;
 
+    //定义获取和设置DOM宽度或高度的方法
+    ;['width','height'].forEach(function(dimension)){
+        //首字母转成大写
+        var dimensionProperty = dimension.replace(/./,function(m){
+            return m[0].toUpperCase();
+        });
+
+        $.fn[dimension] = function(value){
+            var offset,
+                el = this[0];
+            
+            if(value === undefined){
+                //获取宽度或高度
+                return isWindow(el) ? el['inner' + dimensionProperty ] : isDocument(el) ? el.documentElement['scroll' + dimensionProperty] : (offset = this.offset()) && offset[dimension];
+            }else{
+                //设置宽度或高度
+                return this.each(function(index){
+                    el = $(this);
+                    el.css(dimension,funcArg(this,value,index,el[dimension]()));
+                })
+            }
+        }
+    }
+
+    //dom子节点递归函数处理
+    function traverseNode(node,fun){
+        fun(node);
+        for(var i = 0,len = node.childNodes.length; i<len ; i++){
+            traverseNode(node.childNodes[i],fun);
+        }
+    }
+
+    //定义'after', 'prepend', 'before', 'append'方法
+    adjacencyOperators.forEach(function(operator,operatorIndex){
+
+        var inside = operatorIndex % 2;
+
+        $.fn[operator] = function(){
+            // arguments can be nodes, arrays of nodes, Zepto objects and HTML strings
+            var argType, nodes = $.map(arguments, function(arg) {
+                    argType = type(arg)
+                    return argType == "object" || argType == "array" || arg == null ?
+                        arg : zepto.fragment(arg)
+                }),
+                parent, copyByClone = this.length > 1
+            if (nodes.length < 1) return this
+
+            return this.each(function(_, target){
+                parent = inside ? target : target.parentNode
+
+                // convert all methods to a "before" operation
+                target = operatorIndex == 0 ? target.nextSibling :
+                    operatorIndex == 1 ? target.firstChild :
+                        operatorIndex == 2 ? target :
+                            null
+
+                var parentInDocument = $.contains(document.documentElement, parent)
+
+                nodes.forEach(function(node){
+                    if (copyByClone) node = node.cloneNode(true)
+                    else if (!parent) return $(node).remove()
+
+                    parent.insertBefore(node, target)
+                    if (parentInDocument) traverseNode(node, function(el){
+                        if (el.nodeName != null && el.nodeName.toUpperCase() === 'SCRIPT' &&
+                            (!el.type || el.type === 'text/javascript') && !el.src)
+                            window['eval'].call(window, el.innerHTML)
+                    })
+                })
+            })
+        }
+
+        // after    => insertAfter
+        // prepend  => prependTo
+        // before   => insertBefore
+        // append   => appendTo
+        $.fn[inside ? operator+'To' : 'insert'+(operatorIndex ? 'Before' : 'After')] = function(html){
+            $(html)[operator](this)
+            return this
+        }
+
+    })
+
+    //把$.fn作为zepto.Z的原型对象，zepto初始化的时候，获取原型对象
+    zepto.Z.prototype = $.fn;
+
+    zepto.uniq = uniq;
+    zepto.deserializeValue = deserializeValue;
+
+    $.zepto = zepto;
+
+    return $;
 
 })();
 
@@ -1279,7 +1372,14 @@ var Zepto = (function(){
 window.Zepto = Zepto;
 
 //判断window.$是否赋值，如果没有，则把Zepto对象赋给window.$
-window.$ === undefined && (window.$ = Zepto)
+window.$ === undefined && (window.$ = Zepto);
+
+//为dom包装对象增加事件处理的原型方法
+;(function($){
+
+
+})(Zepto);
+
 
 </script>
 
