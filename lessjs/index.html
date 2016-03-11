@@ -1,0 +1,49 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Examples for less</title>
+<link rel="stylesheet/less" type="text/css" href="styles.less" />
+</head>
+<body>
+	<div class="a1">好的</div>
+    <div class="a2">好的</div>
+    <div class="a3">好的</div>
+    <div class="a4">好的</div>
+    <div class="a5">好的</div>
+    <div class="a6">好的</div>
+    <div class="a7">好的</div>
+    <div class="a8">好的</div>
+    <div class="a9">好的</div>
+    <div class="a10">好的</div>
+    <div class="a11">好的</div>
+    <div class="a12">好的</div>
+    <div class="a13">
+        <span class="one">好的</span>
+        <span class="two">好的</span>
+        <span class="three">好的</span>
+        <span class="four">好的</span>
+        <span class="five">好的</span>
+    </div>
+    <div class="a14">
+        <span class="one">好的</span>
+        <span class="two">好的</span>
+        <span class="three">好的</span>
+        <span class="four">好的</span>
+        <span class="five">好的</span>
+    </div>
+</body>
+<script>
+  less = {
+    env: "development",   //开发环境或生产环境 production
+    async: false,   //是否异步
+    fileAsync: false,  //文件载入是否异步
+    poll: 1000,   //当观察者模式时，刷新时间
+    functions: {},
+    dumpLineNumbers: "comments",
+    relativeUrls: false,
+    rootpath: ":/a.com/"   //url的拼接路径
+  };
+</script>
+<script src="less.js" type="text/javascript"></script>
+</html>
