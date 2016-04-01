@@ -208,15 +208,16 @@ var Zepto = (function() {
 
             //判断name是不是样式缓存中的，如果不是，就创建一个映射关系
             function classRE(name) {
+                //classCache,缓存正则
                 return name in classCache ? classCache[name] : (classCache[name] = new RegExp('(^|\\s)' + name + '(\\s|$)'));
             }
 
-            //?不理解
+            //给需要的样式值后面加上'px'单位，除了cssNumber里面的指定的那些
             function maybeAddPx(name, value) {
                 return (typeof value == "number" && !cssNumber[dasherize(name)]) ? value + "px" : value;
             }
 
-            //初始化节点显示，?不是特别理解
+            //获取节点的默认display属性
             function defaultDisplay(nodeName) {
                 var element,
                     display;
@@ -228,7 +229,9 @@ var Zepto = (function() {
                     //window.getComputedStyle可以获取dom的所有样式属性，只读
                     display = getComputedStyle(element, '').getPropertyValue("display");
                     element.parentNode.removeChild(element);
+                    //当display等于none时，设置其值为block
                     display == "none" && (display = "block");
+                    //缓存元素的默认display属性
                     elementDisplay[nodeName] = display;
 
                 }
@@ -236,7 +239,7 @@ var Zepto = (function() {
 
             }
 
-            //获取dom节点下的子节点属性(过滤文本属性等)
+            //获取指定元素的子节点(不包含文本节点),Firefox不支持children,所以只能通过筛选childNodes
             function children(element) {
                 return 'children' in element ? slice.call(element.children) : $.map(element.childNodes, function(node) {
                     if (node.nodeType == 1) {
@@ -256,30 +259,36 @@ var Zepto = (function() {
                 }
 
                 if (!dom) {
-
+                    //将类似<div class="test"/>替换成<div class="test"></div>,算是一种修复吧
                     if (html.replace) {
                         html = html.replace(tagExpanderRE, "<$1></$2>");
                     }
-
+                    //给name取标签名    
                     if (name === undefined) {
                         name = fragmentRE.test(html) && RegExp.$1;
                     }
-
+                    //设置容器标签名，如果不是tr,tbody,thead,tfoot,td,th，则容器标签名为div    
                     if (!(name in containers)) {
                         name = '*';
                     }
-
-                    container = containers[name];
-                    container.innerHTML = '' + html;
-
+                    //创建容器    
+                    container = containers[name];  
+                    //将html代码片断放入容器
+                    container.innerHTML = '' + html;  
+                    //取容器的子节点，这样就直接把字符串转成DOM节点了    
                     dom = $.each(slice.call(container.childNodes), function() {
+                        //逐个删除
                         container.removeChild(this);
                     });
                 }
 
+                //如果properties是对象, 则将其当作属性来给添加进来的节点进行设置
                 if (isPlainObject(properties)) {
+                    //将dom转成zepto对象，为了方便下面调用zepto上的方法
                     nodes = $(dom);
+                    //遍历对象，设置属性
                     $.each(properties, function(key, value) {
+                        //如果设置的是'val', 'css', 'html', 'text', 'data', 'width', 'height','offset'，则调用zepto上相对应的方法
                         if (methodAttributes.indexOf(key) > -1) {
                             nodes[key](value);
                         } else {
@@ -287,19 +296,20 @@ var Zepto = (function() {
                         }
                     })
                 }
-
+                //返回将字符串转成的DOM节点后的数组，比如'<li></li><li></li><li></li>'转成[li,li,li]
                 return dom;
             }
 
             //?不理解
             zepto.Z = function(dom, selector) {
                 dom = dom || [];
+                //通过给dom设置__proto__属性指向$.fn来达到继承$.fn上所有方法的目的
                 dom.__proto__ = $.fn;
                 dom.selector = selector || "";
                 return dom;
             }
 
-            //?不理解
+            //判断给定的参数是否是Zepto集合
             zepto.isZ = function(object) {
                 return object instanceof zepto.Z;
             }
@@ -309,8 +319,11 @@ var Zepto = (function() {
 
                 var dom;
 
+                //没有参数，返回空数组
                 if (!selector) {
                     return zepto.Z();
+
+                //如果selector是个函数，则在DOM ready的时候执行它    
                 } else if (typeof selector == 'string') {
 
                     selector = selector.trim();
@@ -330,26 +343,27 @@ var Zepto = (function() {
 
                     return $(document).ready(selector);
 
+                //如果selector是一个zepto.Z实例，则直接返回它自己
                 } else if (zepto.isZ(selector)) {
 
                     return selector;
 
                 } else {
-
+                    //如果selector是一个数组，则将其里面的null,undefined去掉
                     if (isArray(selector)) dom = compact(selector)
-
+                    //如果selector是个对象，注意DOM节点的typeof值也是object，所以在里面还要再进行一次判断    
                     else if (isObject(selector))
                         dom = [selector], selector = null
 
                     else if (fragmentRE.test(selector))
                         dom = zepto.fragment(selector.trim(), RegExp.$1, context), selector = null
-
+                    //如果存在上下文context，则在上下文中查找selector，此时的selector为普通的CSS选择器
                     else if (context !== undefined) return $(context).find(selector)
-
+                    //如果没有给定上下文，则在document中查找selector，此时的selector为普通的CSS选择器    
                     else dom = zepto.qsa(document, selector)
 
                 }
-
+                //最后将查询结果转换成zepto集合
                 return zepto.Z(dom, selector);
             }
 
@@ -358,17 +372,18 @@ var Zepto = (function() {
                 return zepto.init(selector, context);
             }
 
-            //深度拷贝方法
+            //深度拷贝方法,deep表示是否深度扩展
             function extend(target, source, deep) {
 
                 for (key in source) {
-
+                    //如果深度扩展
                     if (deep && (isPlainObject(source[key]) || isArray(source[key]))) {
 
-                        //如果当前属性值是object，就创建一个object
+                        //如果要扩展的数据是对象且target相对应的key不是对象
                         if (isPlainObject(source[key]) && !isPlainObject(target[key])) {
                             target[key] = {};
                         }
+                        //如果要扩展的数据是数组且target相对应的key不是数组
                         if (isArray(source[key]) && !isArray(target[key])) {
                             target[key] = [];
                         }
@@ -388,11 +403,13 @@ var Zepto = (function() {
             $.extend = function(target) {
                 var deep,
                     args = slice.call(arguments, 1);
-
+                //当第一个参数为boolean类型的值时，表示是否深度扩展    
                 if (typeof target == 'boolean') {
                     deep = target;
+                    //target取第二个参数
                     target = args.shift();
                 }
+                //遍历后面的参数，全部扩展到target上
                 args.forEach(function(arg) {
                     extend(target, arg, deep);
                 })
@@ -410,8 +427,11 @@ var Zepto = (function() {
                     isSimple = simpleSelectorRE.test(nameOnly);
 
                 return (isDocument(element) && isSimple && maybeID) ?
+                    //直接返回document.getElementById,RegExp.$1为ID的值,当没有找节点时返回[]
                     ((found = element.getElementById(nameOnly)) ? [found] : []) :
+                    //当element不为元素节点或者document时，返回[]
                     (element.nodeType !== 1 && element.nodeType !== 9) ? [] :
+                    //否则将获取到的结果转成数组并返回
                     slice.call(
                         isSimple && !maybeID ?
                         maybeClass ? element.getElementsByClassName(nameOnly) : // getElementsByClassName兼容IE9以上浏览器
@@ -420,7 +440,7 @@ var Zepto = (function() {
                     )
             }
 
-            //过滤dom节点，?不是特别明白
+            //在结果中进行过滤
             function filtered(nodes, selector) {
                 return selector == null ? $(nodes) : $(nodes).filter(selector);
             }
@@ -438,12 +458,15 @@ var Zepto = (function() {
                 }
 
             //判断arg是否是函数，如果是函数，返回函数的返回值；如果不是函数，直接返回arg;
+            //这个函数在整个库中取着很得要的作用，处理arg为函数或者值的情况
+            //下面很多设置元素属性时的函数都有用到
             function funcArg(context, arg, idx, payload) {
                 return isFunction(arg) ? arg.call(context, idx, payload) : arg;
             }
 
             //设置或删除dom的属性值
             function setAttribute(node, name, value) {
+                //如果设置的值为null或undefined,则相当于删除该属性，否则设置name属性为value
                 value == null ? node.removeAttribute(name) : node.setAttribute(name, value);
             }
 
@@ -505,7 +528,7 @@ var Zepto = (function() {
                 return emptyArray.indexOf.call(array, element, i);
             }
 
-            //?不理解
+            //将字符串转成驼峰式的格式
             $.camelCase = camelize;
 
             //去除字符串前后空格
@@ -517,7 +540,8 @@ var Zepto = (function() {
             $.support = {};
             $.expr = {};
 
-            //映射迭代处理函数
+            //遍历elements，将每条记录放入callback里进宪处理，保存处理函数返回值不为null或undefined的结果
+            //注意这里没有统一的用for in,是为了避免遍历数据默认属性的情况，如数组的toString,valueOf
             $.map = function(elements, callback) {
 
                 var value,
@@ -525,6 +549,7 @@ var Zepto = (function() {
                     i,
                     key;
 
+                //如果被遍历的数据是数组或者nodeList
                 if (likeArray(elements)) {
 
                     for (i = 0; i < elements.length; i++) {
@@ -535,7 +560,7 @@ var Zepto = (function() {
                     }
 
                 } else {
-
+                    //如果是对象
                     for (key in elements) {
                         value = callback(elements[key], key);
                         if (value != null) {
@@ -548,7 +573,8 @@ var Zepto = (function() {
                 return flatten(values);
             }
 
-            //?跟map方法类似，但区别一时半会儿没看明白
+            //遍历数组，将每条数据作为callback的上下文，并传入数据以及数据的索引进行处理，如果其中一条数据的处理结果明确返回false
+            //则停止遍历，并返回elements
             $.each = function(elements, callback) {
 
                 var i,
@@ -577,7 +603,7 @@ var Zepto = (function() {
                 class2type["[object " + name + "]"] = name.toLowerCase();
             })
 
-            //定义所有的函数方法
+            //定义函数方法，主要针对DOM的一些操作
             $.fn = {
 
                 //拷贝所有可用的数组原型方法
@@ -631,7 +657,7 @@ var Zepto = (function() {
                     return this.length;
                 },
 
-                //?不理解
+                //将集合从dom中删除
                 remove: function() {
                     return this.each(function() {
 
@@ -642,7 +668,8 @@ var Zepto = (function() {
                     })
                 },
 
-                //?不理解
+                //遍历集合，将集合中的每一项放入callback中进行处理，去掉结果为false的项，注意这里的callback如果明确返回false
+                //那么就会停止循环了
                 each: function(callback) {
                     //every()与some()方法都是JS中数组的迭代方法。every()是对数组中的每一项运行给定函数，如果该函数对每一项返回true,则返回true。some()是对数组中每一项运行指定函数，如果该函数对任一项返回true，则返回true。
                     emptyArray.every.call(this, function(el, index) {
@@ -652,22 +679,22 @@ var Zepto = (function() {
 
                 },
 
-                //?不理解
+                //过滤集合，返回处理结果为true的记录
                 filter: function(selector) {
-
+                    //this.not(selector)取到需要排除的集合，第二次再取反(这个时候this.not的参数就是一个集合了)，得到想要的集合
                     if (isFunction(selector)) {
                         return this.not(this.not(selector));
                     }
-
+                    //filter收集返回结果为true的记录
                     return $(filter.call(this, function(element) {
-                        return zepto.matches(element, selector);
+                        return zepto.matches(element, selector);   //当element与selector匹配，则收集
                     }))
 
                 },
 
                 //把选择器拼接起来，并且去除中间重复的元素
                 add: function(selector, context) {
-                    return $(uniq(this.concat($(selector, context))));
+                    return $(uniq(this.concat($(selector, context))));   //追加并去重
                 },
 
                 //判断该节点是否在选择器中
@@ -675,21 +702,27 @@ var Zepto = (function() {
                     return this.length > 0 && zepto.matches(this[0], selector);
                 },
 
-                //?不理解
+                //排除集合里满足条件的记录，接收参数为：css选择器，function, dom ,nodeList
                 not: function(selector) {
 
                     var nodes = [];
+                    //当selector为函数时，safari下的typeof odeList也是function，所以这里需要再加一个判断selector.call !== undefined
                     if (isFunction(selector) && selector.call !== undefined) {
                         this.each(function(index) {
+                            //注意这里收集的是selector.call(this,idx)返回结果为false的时候记录
                             if (!selector.call(this, index)) {
                                 nodes.push(this);
                             }
                         })
                     } else {
-
-                        var excludes = typeof selector == 'string' ? this.filter(selector) : (likeArray(selector) && isFunction(selector.item)) ? slice.call(selector) : $(selector);
+                        //当selector为字符串的时候，对集合进行筛选，也就是筛选出集合中满足selector的记录
+                        var excludes = typeof selector == 'string' ? this.filter(selector) : 
+                        //当selector为nodeList时执行slice.call(selector),注意这里的isFunction(selector.item)是为了排除selector为数组的情况
+                        //当selector为css选择器，执行$(selector)
+                        (likeArray(selector) && isFunction(selector.item)) ? slice.call(selector) : $(selector);
 
                         this.forEach(function(el) {
+                            //筛选出不在excludes集合里的记录，达到排除的目的
                             if (excludes.indexOf(el) < 0) {
                                 nodes.push(el);
                             }
@@ -699,7 +732,12 @@ var Zepto = (function() {
                     return $(nodes);
                 },
 
-                //?不理解
+                /*
+                 接收node和string作为参数，给当前集合筛选出包含selector的集合
+                 isObject(selector)是判断参数是否是node，因为typeof node == 'object'
+                 当参数为node时，只需要判读当前记当里是否包含node节点即可
+                 当参数为string时，则在当前记录里查询selector，如果长度为0，则为false，filter函数就会过滤掉这条记录，否则保存该记录
+                */
                 has: function(selector) {
 
                     return this.filter(function() {
@@ -727,22 +765,27 @@ var Zepto = (function() {
                     return el && !isObject(el) ? el : $(el);
                 },
 
-                //按条件查询包装DOM对象，?不是特别理解
+                //在当前集合中查找selector，selector可以是集合，选择器，以及节点
                 find: function(selector) {
                     var result,
                         $this = this;
                     if (!selector) {
                         result = $(); //创建一个空的包装DOM对象
                     } else if (typeof selector == 'object') {
+                        //遍历selector，筛选出父级为集合中记录的selector
                         result = $(selector).filter(function() {
                             var node = this;
+                            //如果$.contains(parent, node)返回true，则emptyArray.some也会返回true,外层的filter则会收录该条记录
                             return emptyArray.some.call($this, function(parent) {
                                 return $.contains(parent, node);
                             })
                         })
+                    //如果selector是css选择器
+                    //如果当前集合长度为1时，调用zepto.qsa，将结果转成zepto对象
                     } else if (this.length == 1) {
                         result = $(zepto.qsa(this[0], selector));
                     } else {
+                        //如果长度大于1，则调用map遍历
                         result = this.map(function() {
                             return zepto.qsa(this, selector)
                         });
@@ -751,7 +794,7 @@ var Zepto = (function() {
 
                 },
 
-                //?不理解
+                 //取集合中第一记录的最近的满足条件的父级元素
                 closest: function(selector, context) {
 
                     var node = this[0],
@@ -761,8 +804,10 @@ var Zepto = (function() {
                         collection = $(selector);
                     }
 
+                    //当selector是node或者zepto集合时，如果node不在collection集合中时需要取node.parentNode进行判断
+                    //当selector是字符串选择器时，如果node与selector不匹配，则需要取node.parentNode进行判断
                     while (node && !(collection ? collection.indexOf(node) >= 0 : zepto.matches(node, selector))) {
-
+                        //当node 不是context,document的时候，取node.parentNode
                         node = node !== context && !isDocument(node) && node.parentNode;
                     }
 
