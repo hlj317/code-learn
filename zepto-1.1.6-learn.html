@@ -32,6 +32,7 @@ var Zepto = (function() {
         document = window.document, //定义document对象
         elementDisplay = {}, //定义一个元素对象
         classCache = {}, //定义一个缓存对象
+        //设置CSS时，不用加px单位的属性
         cssNumber = {
             "column-count": 1,
             "columns": 1,
@@ -39,7 +40,7 @@ var Zepto = (function() {
             "opacity": 1,
             "z-index": 1,
             "zoom": 1
-        }, //设置CSS时，不用加px单位的属性
+        }, 
         //HTML代码片断的正则
         fragmentRE = /^\s*<(\w+|!)[^>]*>/,
         singleTagRE = /^<(\w+)\s*\/?>(?:<\/\1>|)$/,
@@ -315,7 +316,7 @@ var Zepto = (function() {
         return object instanceof zepto.Z;
     }
 
-    //选择器初始化方法，?不理解
+    //选择器初始化方法
     zepto.init = function(selector, context) {
 
         var dom;
@@ -419,9 +420,8 @@ var Zepto = (function() {
         return target;
     }
 
-    //选择器，?不是特别理解实现原理
+    //zepto选择器
     zepto.qsa = function(element, selector) {
-
         var found,
             maybeID = selector[0] == '#',
             maybeClass = !maybeID && selector[0] == '.',
