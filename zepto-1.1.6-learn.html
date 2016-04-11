@@ -219,7 +219,7 @@ var Zepto = (function() {
         return (typeof value == "number" && !cssNumber[dasherize(name)]) ? value + "px" : value;
     }
 
-    //获取节点的默认display属性
+    //把节点放到elementDisplay缓存池中，同时设为block状态
     function defaultDisplay(nodeName) {
         var element,
             display;
@@ -229,6 +229,7 @@ var Zepto = (function() {
             element = document.createElement(nodeName);
             document.body.appendChild(element);
             //window.getComputedStyle可以获取dom的所有样式属性，只读
+            //getComputedStyle与style的区别:(1)只读与可写(2)获取的对象范围
             display = getComputedStyle(element, '').getPropertyValue("display");
             element.parentNode.removeChild(element);
             //当display等于none时，设置其值为block
@@ -250,7 +251,7 @@ var Zepto = (function() {
         })
     }
 
-    //?不理解
+    //把html片段转成数组返回
     zepto.fragment = function(html, name, properties) {
 
         var dom, nodes, container;
@@ -302,7 +303,7 @@ var Zepto = (function() {
         return dom;
     }
 
-    //?不理解
+    //为dom包装成一个具有zepto原型方法的对象
     zepto.Z = function(dom, selector) {
         dom = dom || [];
         //通过给dom设置__proto__属性指向$.fn来达到继承$.fn上所有方法的目的
