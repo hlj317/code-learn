@@ -650,7 +650,7 @@ var Zepto = (function() {
             return index === undefined ? slice.call(this) : this[index >= 0 ? index : index + this.length];
         },
 
-        //获取数组元素
+        //把伪数组转成真实数组
         toArray: function() {
             return this.get();
         },

@@ -151,6 +151,7 @@ var Zepto = (function() {
     // This function can be overriden in plugins for example to make
     // it compatible with browsers that don't support the DOM fully.
     zepto.fragment = function(html, name, properties) {
+        debugger;
         var dom, nodes, container
 
         // A special case optimization for a single tag
@@ -201,6 +202,7 @@ var Zepto = (function() {
     // special cases).
     // This method can be overriden in plugins.
     zepto.init = function(selector, context) {
+        debugger;
         var dom
             // If nothing given, return an empty Zepto collection
         if (!selector) return zepto.Z()
@@ -263,6 +265,7 @@ var Zepto = (function() {
     // Copy all but undefined properties from one or more
     // objects to the `target` object.
     $.extend = function(target) {
+        debugger;
         var deep, args = slice.call(arguments, 1)
         if (typeof target == 'boolean') {
             deep = target
@@ -276,7 +279,6 @@ var Zepto = (function() {
     // uses `document.querySelectorAll` and optimizes for some special cases, like `#id`.
     // This method can be overriden in plugins.
     zepto.qsa = function(element, selector) {
-        debugger;
         var found,
             maybeID = selector[0] == '#',
             maybeClass = !maybeID && selector[0] == '.',
@@ -1623,4 +1625,39 @@ window.$ === undefined && (window.$ = Zepto);
         return this
     }
 
+})(Zepto)
+
+;(function($){
+  // __proto__ doesn't exist on IE<11, so redefine
+  // the Z function to use object extension instead
+  if (!('__proto__' in {})) {
+    $.extend($.zepto, {
+      Z: function(dom, selector){
+        dom = dom || []
+        $.extend(dom, $.fn)
+        dom.selector = selector || ''
+        dom.__Z = true
+        return dom
+      },
+      // this is a kludge but works
+      isZ: function(object){
+        return $.type(object) === 'array' && '__Z' in object
+      }
+    })
+  }
+
+  // getComputedStyle shouldn't freak out when called
+  // without a valid element as argument
+  try {
+    getComputedStyle(undefined)
+  } catch(e) {
+    var nativeGetComputedStyle = getComputedStyle;
+    window.getComputedStyle = function(element){
+      try {
+        return nativeGetComputedStyle(element)
+      } catch(e) {
+        return null
+      }
+    }
+  }
 })(Zepto)
